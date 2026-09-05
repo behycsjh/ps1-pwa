@@ -97,13 +97,46 @@
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
+        /* Модальное окно настроек */
+        #settings-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 30;
+        }
+        .modal-content {
+            background: #1c1c24;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 12px;
+            padding: 20px;
+            width: 90%;
+            max-width: 360px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+        }
+        select, .file-btn {
+            background: #2a2a38;
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+            padding: 6px 12px;
+            border-radius: 6px;
+        }
         #file-input, #bios-input {
             display: none;
-        }
-        #bios-status {
-            font-size: 12px;
-            color: #8e8e93;
-            margin-left: 8px;
         }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/nostalgist/dist/nostalgist.umd.js"></script>
@@ -111,120 +144,100 @@
 <body>
     <div id="app-container">
         <header>
-            <div style="display: flex; align-items: center;">
-                <button class="btn" onclick="document.getElementById('file-input').click()">📁 ROM</button>
-                <button class="btn" onclick="document.getElementById('bios-input').click()" style="margin-left: 8px;">⚙️ BIOS</button>
-                <span id="bios-status">BIOS: Не загружен</span>
-            </div>
-            <div>
-                <button class="btn" id="install-btn" style="display: none;">📲 Установить</button>
-                <button class="btn" onclick="toggleFullscreen()">⛶ Экран</button>
-            </div>
+            <button class="btn" onclick="document.getElementById('file-input').click()">📁 ROM</button>
+            <button class="btn" onclick="toggleFullscreen()">⛶ Экран</button>
+            <button class="btn" onclick="openSettings()">⚙️ Настройки</button>
         </header>
 
         <div id="canvas-container">
             <div id="loading-overlay" style="display: none;">
                 <div class="spinner"></div>
-                <p id="loading-text">Загрузка ядра...</p>
+                <p id="loading-text">Загрузка игры...</p>
             </div>
             <canvas id="canvas"></canvas>
         </div>
     </div>
 
-    <!-- Инпуты для файлов -->
+    <!-- Модальное окно настроек -->
+    <div id="settings-modal">
+        <div class="modal-content">
+            <h3 style="margin-bottom: 5px;">⚙️ Настройки</h3>
+            
+            <div class="setting-row">
+                <span>🧠 Системный BIOS:</span>
+                <button class="file-btn" onclick="document.getElementById('bios-input').click()">Загрузить BIOS</button>
+            </div>
+            <div id="bios-info" style="font-size: 11px; color: #34c759; text-align: right;">BIOS не добавлен</div>
+
+            <div class="setting-row">
+                <span>🎮 Ядро:</span>
+                <select id="core-select">
+                    <option value="pcsx_rearmed">PCSX ReARMed</option>
+                </select>
+            </div>
+
+            <button class="btn" style="background: #34c759; margin-top: 10px; justify-content: center;" onclick="closeSettings()">Продолжить</button>
+        </div>
+    </div>
+
+    <!-- Скрытые инпуты -->
     <input type="file" id="file-input" multiple accept=".bin,.cue,.chd,.pbp,.iso,.img,.m3u,.zip">
     <input type="file" id="bios-input" multiple accept=".bin,.BIN">
 
     <script>
         let currentInstance = null;
-        let userBiosFiles = []; // Хранилище загруженных файлов BIOS
+        let storedBiosFiles = [];
 
         const fileInput = document.getElementById('file-input');
         const biosInput = document.getElementById('bios-input');
-        const biosStatus = document.getElementById('bios-status');
+        const settingsModal = document.getElementById('settings-modal');
+        const biosInfo = document.getElementById('bios-info');
         const loadingOverlay = document.getElementById('loading-overlay');
         const loadingText = document.getElementById('loading-text');
 
-        // Регистрация Service Worker для офлайн работы PWA
+        // Регистрация Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(err => {
-                    console.log('SW registration failed: ', err);
-                });
+                navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
             });
         }
 
-        // Обработка кнопки установки PWA
-        let deferredPrompt;
-        const installBtn = document.getElementById('install-btn');
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
-            installBtn.style.display = 'inline-flex';
-        });
-
-        installBtn.addEventListener('click', () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        installBtn.style.display = 'none';
-                    }
-                    deferredPrompt = null;
-                });
-            }
-        });
-
-        // Загрузка файла BIOS пользователем
+        // Выбор BIOS через меню настроек
         biosInput.addEventListener('change', (e) => {
             const files = Array.from(e.target.files);
             if (!files.length) return;
 
-            userBiosFiles = files;
-            const names = files.map(f => f.name).join(', ');
-            biosStatus.innerText = `BIOS: ${names}`;
-            biosStatus.style.color = '#34c759'; // зеленый цвет успешного статуса
-            alert(`Файл(ы) BIOS (${names}) успешно прикреплены! Теперь выбирайте файлы игры.`);
+            storedBiosFiles = files;
+            biosInfo.innerText = "✓ Загружен: " + files.map(f => f.name).join(', ');
+            alert("Файл BIOS сохранен! Теперь можно запускать игру.");
         });
 
-        // Запуск игры
+        // Запуск файлов игры
         fileInput.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files);
             if (!files.length) return;
 
-            showLoading('Подготовка файлов...');
+            showLoading('Загрузка и сборка файлов...');
 
             try {
                 if (currentInstance) {
                     await currentInstance.destroy();
                 }
 
-                showLoading('Запуск эмулятора...');
-
-                // Конфигурация запуска Nostalgist
-                const launchConfig = {
+                const options = {
                     core: 'pcsx_rearmed',
                     rom: files,
                     element: document.getElementById('canvas'),
-                    style: {
-                        width: '100%',
-                        height: '100%'
-                    }
+                    style: { width: '100%', height: '100%' }
                 };
 
-                // Если пользователь выбрал BIOS через кнопку ⚙️ BIOS, передаем его
-                if (userBiosFiles.length > 0) {
-                    launchConfig.bios = userBiosFiles;
-                } else {
-                    // Резервный источник BIOS с CDN
-                    launchConfig.bios = [
-                        'https://cdn.jsdelivr.net/gh/RetroPie/RetroPie-Setup@master/scriptmodules/emulators/retroarch/bin/scph5501.bin'
-                    ];
+                // Прикрепляем BIOS если он был загружен
+                if (storedBiosFiles.length > 0) {
+                    options.bios = storedBiosFiles;
                 }
 
-                currentInstance = await Nostalgist.launch(launchConfig);
+                currentInstance = await Nostalgist.launch(options);
                 hideLoading();
-
             } catch (err) {
                 console.error(err);
                 alert('Ошибка запуска: ' + (err.message || err));
@@ -232,24 +245,16 @@
             }
         });
 
-        function showLoading(text) {
-            loadingText.innerText = text;
-            loadingOverlay.style.display = 'flex';
-        }
-
-        function hideLoading() {
-            loadingOverlay.style.display = 'none';
-        }
+        function openSettings() { settingsModal.style.display = 'flex'; }
+        function closeSettings() { settingsModal.style.display = 'none'; }
+        function showLoading(text) { loadingText.innerText = text; loadingOverlay.style.display = 'flex'; }
+        function hideLoading() { loadingOverlay.style.display = 'none'; }
 
         function toggleFullscreen() {
             if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    console.log(err.message);
-                });
-            } else {
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                }
+                document.documentElement.requestFullscreen().catch(err => console.log(err));
+            } else if (document.exitFullscreen) {
+                document.exitFullscreen();
             }
         }
     </script>
