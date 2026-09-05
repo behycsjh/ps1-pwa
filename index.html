@@ -2,322 +2,218 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>PS1 PWA Emulator</title>
-    
-    <link rel="manifest" href="./manifest.json">
-    <meta name="theme-color" content="#0f172a">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#1a1a1a">
     <style>
-        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
-        html, body { width: 100%; height: 100%; background: #000; color: #fff; font-family: system-ui, -apple-system, sans-serif; overflow: hidden; }
-
-        #app-wrapper {
-            position: relative;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #0d0d11;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            color: #ffffff;
+        }
+        #app-container {
+            display: flex;
+            flex-direction: column;
             width: 100vw;
-            height: 100dvh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #000;
+            height: 100vh;
+            position: relative;
         }
-
-        #canvas-container {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 1;
-            display: flex; align-items: center; justify-content: center;
-        }
-        #canvas-container canvas { width: 100% !important; height: 100% !important; object-fit: contain; }
-
-        /* Верхняя панель управления с абсолютным приоритетом кликов */
-        .top-overlay {
-            position: absolute;
-            top: 10px; left: 0; right: 0;
-            z-index: 99999 !important;
-            display: flex;
-            justify-content: space-between;
-            padding: 0 12px;
-            pointer-events: auto;
-        }
-
-        .top-group { display: flex; gap: 8px; }
-
-        .overlay-btn {
-            padding: 8px 12px;
-            background: rgba(15, 23, 42, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            color: #fff;
-            border-radius: 8px;
-            font-size: 12px;
-            font-weight: 700;
-            cursor: pointer;
-            backdrop-filter: blur(4px);
-        }
-
-        /* Настройки поверх абсолютно всего */
-        #settings-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(0, 0, 0, 0.9);
+        header {
+            height: 50px;
+            background: rgba(20, 20, 28, 0.9);
             backdrop-filter: blur(10px);
-            z-index: 999999 !important;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            z-index: 10;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .btn {
+            background: #2a2a38;
+            color: #fff;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background 0.2s;
+        }
+        .btn:active {
+            background: #3b3b4f;
+        }
+        #canvas-container {
+            flex: 1;
+            width: 100%;
+            height: calc(100vh - 50px);
+            display: flex;
             align-items: center;
             justify-content: center;
+            background: #000000;
+            position: relative;
         }
-        #settings-modal.active { display: flex !important; }
-
-        .modal-content {
-            background: #1e293b;
-            padding: 20px;
-            border-radius: 12px;
-            width: 90%; max-width: 400px;
-            max-height: 85vh; overflow-y: auto;
-            border: 1px solid #475569;
+        canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
         }
-        .modal-content h2 { font-size: 14px; margin: 12px 0 6px; color: #38bdf8; border-bottom: 1px solid #334155; }
-        .setting-item { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 12px; }
-        select { background: #0f172a; color: #fff; border: 1px solid #334155; padding: 6px; border-radius: 6px; }
-
-        /* Сенсорный контроллер */
-        .controls-overlay {
+        #loading-overlay {
             position: absolute;
-            bottom: 0; left: 0; right: 0; top: 0;
-            z-index: 10;
-            display: flex; flex-direction: column; justify-content: flex-end; align-items: center;
-            padding-bottom: 8px;
-            pointer-events: none;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(13, 13, 17, 0.95);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            gap: 16px;
         }
-        #touch-controls {
-            pointer-events: auto;
-            width: 100%; max-width: 600px;
-            display: flex; justify-content: space-between; align-items: flex-end;
-            padding: 0 12px; margin-bottom: 6px;
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-left-color: #007aff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
-        .dpad, .action-btns {
-            display: grid;
-            grid-template-columns: repeat(3, clamp(38px, 11vw, 48px));
-            grid-template-rows: repeat(3, clamp(38px, 11vw, 48px));
-            gap: 4px;
+        @keyframes spin {
+            to { transform: rotate(360deg); }
         }
-        .pad-btn {
-            background: rgba(30, 41, 59, 0.8);
-            border: 1px solid rgba(255,255,255,0.3);
-            border-radius: 8px; color: #fff; font-weight: bold;
-            display: flex; align-items: center; justify-content: center;
+        #file-input {
+            display: none;
         }
-        .abtn { border-radius: 50%; }
-        .btn-active { background: #0284c7 !important; transform: scale(0.92); }
-        .center-btns { pointer-events: auto; display: flex; gap: 4px; flex-wrap: wrap; justify-content: center; }
-        .cbtn { padding: 6px 10px; background: rgba(30, 41, 59, 0.9); border: 1px solid rgba(255,255,255,0.3); border-radius: 6px; font-size: 10px; color: #fff; }
-
-        #loader-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.9); display: none; flex-direction: column;
-            align-items: center; justify-content: center; gap: 10px; z-index: 5000;
-        }
-        .spinner { width: 32px; height: 32px; border: 3px solid #334155; border-top: 3px solid #38bdf8; border-radius: 50%; animation: spin 0.8s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        input[type="file"] { display: none; }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/nostalgist/dist/nostalgist.umd.js"></script>
 </head>
 <body>
-
-    <div id="app-wrapper">
-        <div class="top-overlay">
-            <div class="top-group">
-                <label class="overlay-btn" for="rom">📁 ROM</label>
-                <input type="file" id="rom" multiple accept=".bin,.cue,.pbp,.chd,.iso,.zip">
-                <button class="overlay-btn" id="fullscreen-btn">⛶ Экран</button>
-            </div>
-            <div class="top-group">
-                <button class="overlay-btn" id="pwa-install-btn" style="display:none; background:#0284c7;">📲 Установить</button>
-                <button class="overlay-btn" id="open-settings-btn">⚙️ Настройки</button>
-            </div>
-        </div>
+    <div id="app-container">
+        <header>
+            <button class="btn" onclick="document.getElementById('file-input').click()">📁 ROM</button>
+            <button class="btn" id="install-btn" style="display: none;">📲 Установить</button>
+            <button class="btn" onclick="toggleFullscreen()">⛶ Экран</button>
+        </header>
 
         <div id="canvas-container">
-            <div id="loader-overlay">
+            <div id="loading-overlay" style="display: none;">
                 <div class="spinner"></div>
-                <div id="loader-text" style="font-size:12px; color:#38bdf8;">Загрузка...</div>
+                <p id="loading-text">Загрузка ядра и BIOS...</p>
             </div>
-        </div>
-
-        <div class="controls-overlay">
-            <div id="touch-controls">
-                <div class="dpad">
-                    <div></div><div class="pad-btn" data-btn="up">▲</div><div></div>
-                    <div class="pad-btn" data-btn="left">◄</div><div></div><div class="pad-btn" data-btn="right">►</div>
-                    <div></div><div class="pad-btn" data-btn="down">▼</div><div></div>
-                </div>
-                <div class="action-btns">
-                    <div></div><div class="pad-btn abtn" data-btn="x">△</div><div></div>
-                    <div class="pad-btn abtn" data-btn="y">□</div><div></div><div class="pad-btn abtn" data-btn="a">◯</div>
-                    <div></div><div class="pad-btn abtn" data-btn="b">✕</div><div></div>
-                </div>
-            </div>
-            <div class="center-btns">
-                <button class="cbtn" onclick="quickSave()">💾 Save</button>
-                <button class="cbtn" onclick="quickLoad()">📂 Load</button>
-                <div class="cbtn pad-btn" data-btn="select">SELECT</div>
-                <div class="cbtn pad-btn" data-btn="start">START</div>
-                <div class="cbtn pad-btn" data-btn="l1">L1</div>
-                <div class="cbtn pad-btn" data-btn="r1">R1</div>
-            </div>
+            <canvas id="canvas"></canvas>
         </div>
     </div>
 
-    <!-- Модальное окно Настроек -->
-    <div id="settings-modal">
-        <div class="modal-content">
-            <h2 style="margin-top:0;">🎮 Управление</h2>
-            <div style="display:flex; gap:8px; margin-bottom:10px;">
-                <button class="overlay-btn" style="flex:1; background:#16a34a;" id="close-settings-btn">▶️ Продолжить</button>
-            </div>
-            <h2>⚙️ Настройки 3D</h2>
-            <div class="setting-item">
-                <label>Разрешение:</label>
-                <select id="gpu-res">
-                    <option value="disabled">1x Стандарт</option>
-                    <option value="enabled" selected>2x Улучшенное</option>
-                </select>
-            </div>
-            <h2>🧠 Ядро</h2>
-            <div class="setting-item">
-                <label>Движок:</label>
-                <select id="core-select">
-                    <option value="pcsx_rearmed" selected>PCSX ReARMed</option>
-                </select>
-            </div>
-        </div>
-    </div>
+    <input type="file" id="file-input" multiple accept=".bin,.cue,.chd,.pbp,.iso,.img,.m3u,.zip">
 
-    <script src="https://cdn.jsdelivr.net/npm/nostalgist/dist/nostalgist.umd.js"></script>
     <script>
-        // --- 1. Service Worker & PWA ---
+        let currentInstance = null;
+        const fileInput = document.getElementById('file-input');
+        const loadingOverlay = document.getElementById('loading-overlay');
+        const loadingText = document.getElementById('loading-text');
+
+        // Регистрация Service Worker для офлайн работы PWA
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js').catch(console.error);
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(err => {
+                    console.log('SW registration failed: ', err);
+                });
+            });
         }
 
-        let deferredPrompt = null;
+        // Обработка кнопки установки PWA
+        let deferredPrompt;
+        const installBtn = document.getElementById('install-btn');
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
-            document.getElementById('pwa-install-btn').style.display = 'block';
+            installBtn.style.display = 'inline-flex';
         });
 
-        document.getElementById('pwa-install-btn').onclick = async () => {
-            if (!deferredPrompt) return;
-            deferredPrompt.prompt();
-            deferredPrompt = null;
-            document.getElementById('pwa-install-btn').style.display = 'none';
-        };
-
-        // --- 2. Новая гарантированная обработка Настроек ---
-        const settingsModal = document.getElementById('settings-modal');
-        
-        document.getElementById('open-settings-btn').onclick = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            settingsModal.classList.add('active');
-            if (currentInstance) try { currentInstance.pause(); } catch(err){}
-        };
-
-        document.getElementById('close-settings-btn').onclick = () => {
-            settingsModal.classList.remove('active');
-            if (currentInstance) try { currentInstance.resume(); } catch(err){}
-        };
-
-        // --- 3. Полный экран с фолбеком для мобильных ---
-        document.getElementById('fullscreen-btn').onclick = () => {
-            const el = document.documentElement;
-            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-                if (el.requestFullscreen) el.requestFullscreen().catch(toggleFallback);
-                else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
-                else toggleFallback();
-            } else {
-                if (document.exitFullscreen) document.exitFullscreen();
-                else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+        installBtn.addEventListener('click', () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        installBtn.style.display = 'none';
+                    }
+                    deferredPrompt = null;
+                });
             }
-        };
+        });
 
-        function toggleFallback() {
-            window.scrollTo(0, 1);
-            alert("Экран развернут по размеру окна браузера");
-        }
-
-        // --- 4. Эмулятор ---
-        let currentInstance = null;
-        let quickSaveState = null;
-
-        document.getElementById('rom').onchange = async (e) => {
+        // Запуск выбранных файлов
+        fileInput.addEventListener('change', async (e) => {
             const files = Array.from(e.target.files);
             if (!files.length) return;
-            
-            document.getElementById('loader-overlay').style.display = 'flex';
-            const container = document.getElementById('canvas-container');
-            
-            if (currentInstance) {
-                await currentInstance.exit({ removeCanvas: true });
-                currentInstance = null;
-            }
-            container.querySelectorAll('canvas').forEach(c => c.remove());
-            
-            const canvas = document.createElement('canvas');
-            container.appendChild(canvas);
+
+            showLoading('Подготовка файлов игры...');
 
             try {
+                if (currentInstance) {
+                    await currentInstance.destroy();
+                }
+
+                showLoading('Загрузка PS1 BIOS и запуск...');
+
+                // Nostalgist.js запускает ядро pcsx_rearmed с подгрузкой официального BIOS
                 currentInstance = await Nostalgist.launch({
-                    core: document.getElementById('core-select').value,
-                    rom: files[0],
-                    element: canvas,
-                    coreConfig: {
-                        'pcsx_rearmed_neon_enhancement_enable': document.getElementById('gpu-res').value
+                    core: 'pcsx_rearmed',
+                    rom: files,
+                    bios: [
+                        'https://cdn.jsdelivr.net/gh/RetroPie/RetroPie-Setup@master/scriptmodules/emulators/retroarch/bin/scph5501.bin'
+                    ],
+                    element: document.getElementById('canvas'),
+                    style: {
+                        width: '100%',
+                        height: '100%'
                     }
                 });
-            } catch(err) {
-                alert("Ошибка запуска ROM: " + err.message);
-            } finally {
-                document.getElementById('loader-overlay').style.display = 'none';
+
+                hideLoading();
+            } catch (err) {
+                console.error(err);
+                alert('Ошибка при запуске игры: ' + (err.message || err));
+                hideLoading();
             }
-        };
-
-        async function quickSave() {
-            if (currentInstance) {
-                const s = await currentInstance.saveState();
-                quickSaveState = s.state;
-            }
-        }
-
-        async function quickLoad() {
-            if (currentInstance && quickSaveState) {
-                await currentInstance.loadState(quickSaveState);
-            }
-        }
-
-        // --- 5. Тач Кликер ---
-        document.querySelectorAll('.pad-btn').forEach(btn => {
-            const name = btn.getAttribute('data-btn');
-            if (!name) return;
-
-            const onDown = (e) => {
-                e.preventDefault();
-                btn.classList.add('btn-active');
-                if (currentInstance) try { currentInstance.pressDown(name); } catch(err){}
-            };
-            const onUp = (e) => {
-                e.preventDefault();
-                btn.classList.remove('btn-active');
-                if (currentInstance) try { currentInstance.pressUp(name); } catch(err){}
-            };
-
-            btn.addEventListener('pointerdown', onDown);
-            btn.addEventListener('pointerup', onUp);
-            btn.addEventListener('pointercancel', onUp);
         });
+
+        function showLoading(text) {
+            loadingText.innerText = text;
+            loadingOverlay.style.display = 'flex';
+        }
+
+        function hideLoading() {
+            loadingOverlay.style.display = 'none';
+        }
+
+        function toggleFullscreen() {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(err => {
+                    console.log(err.message);
+                });
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                }
+            }
+        }
     </script>
 </body>
 </html>
