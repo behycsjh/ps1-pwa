@@ -1,8 +1,8 @@
 [{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "io.github.behycsjh.twa",
-        "sha256_cert_fingerprints": ["EC:85:01:6C:75:A7:A1:6B:CB:D2:A0:7F:83:3F:B1:C9:67:69:75:EE:56:BA:37:25:45:68:01:EE:A6:02:21:30"]
-      }
-    }]
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target": {
+    "namespace": "android_app",
+    "package_name": "app.netlify.dazzling_begonia_ef8b49.twa",
+    "sha256_cert_fingerprints": ["06:18:33:FC:1A:3C:30:A9:55:94:3A:D8:A5:85:82:6A:75:00:4B:44:DB:57:CE:29:DB:EE:5D:55:71:99:C8:4E"]
+  }
+}]
