@@ -2,7 +2,8 @@
   "name": "PS1 Mobile Emulator",
   "short_name": "PS1 PWA",
   "description": "Мобильный эмулятор PlayStation 1",
-  "start_url": "./index.html",
+  "start_url": "index.html",
+  "scope": "./",
   "display": "standalone",
   "orientation": "landscape",
   "background_color": "#000000",
@@ -11,13 +12,14 @@
     {
       "src": "https://cdn-icons-png.flaticon.com/512/588/588258.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "https://cdn-icons-png.flaticon.com/512/588/588258.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
-
