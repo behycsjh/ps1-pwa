@@ -2,7 +2,7 @@
       "relation": ["delegate_permission/common.handle_all_urls"],
       "target": {
         "namespace": "android_app",
-        "package_name": "io.github.behycsjh.twa",
-        "sha256_cert_fingerprints": ["D3:95:EC:63:63:CC:AD:E3:68:71:A1:E8:53:94:FB:C2:72:59:63:64:C2:6C:40:15:23:22:A0:E7:19:2E:BC:F6"]
+        "package_name": "com.ps1.mobile.emulator",
+        "sha256_cert_fingerprints": ["7D:73:93:6B:79:10:78:A8:1F:4C:ED:AE:B5:97:36:51:CF:BF:4F:6B:C9:05:80:F9:47:F3:B1:00:90:26:44:D4"]
       }
     }]
