@@ -1,262 +1,672 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>PS1 PWA Emulator</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#1a1a1a">
-    <style>
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            user-select: none;
-            -webkit-user-select: none;
-        }
-        body, html {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            background-color: #0d0d11;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            color: #ffffff;
-        }
-        #app-container {
-            display: flex;
-            flex-direction: column;
-            width: 100vw;
-            height: 100vh;
-            position: relative;
-        }
-        header {
-            height: 50px;
-            background: rgba(20, 20, 28, 0.9);
-            backdrop-filter: blur(10px);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0 16px;
-            z-index: 10;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        .btn {
-            background: #2a2a38;
-            color: #fff;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            padding: 8px 14px;
-            border-radius: 8px;
-            font-size: 13px;
-            font-weight: 600;
-            cursor: pointer;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: background 0.2s;
-        }
-        .btn:active {
-            background: #3b3b4f;
-        }
-        #canvas-container {
-            flex: 1;
-            width: 100%;
-            height: calc(100vh - 50px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #000000;
-            position: relative;
-        }
-        canvas {
-            width: 100%;
-            height: 100%;
-            object-fit: contain;
-        }
-        #loading-overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(13, 13, 17, 0.95);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            z-index: 20;
-            gap: 16px;
-        }
-        .spinner {
-            width: 40px;
-            height: 40px;
-            border: 4px solid rgba(255, 255, 255, 0.1);
-            border-left-color: #007aff;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        /* Модальное окно настроек */
-        #settings-modal {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(5px);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 30;
-        }
-        .modal-content {
-            background: #1c1c24;
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 12px;
-            padding: 20px;
-            width: 90%;
-            max-width: 360px;
-            display: flex;
-            flex-direction: column;
-            gap: 14px;
-        }
-        .setting-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 14px;
-        }
-        select, .file-btn {
-            background: #2a2a38;
-            color: #fff;
-            border: 1px solid rgba(255,255,255,0.2);
-            padding: 6px 12px;
-            border-radius: 6px;
-        }
-        #file-input, #bios-input {
-            display: none;
-        }
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/nostalgist/dist/nostalgist.umd.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>PS1 Mobile Emulator PRO</title>
+  <link rel="manifest" href="manifest.json">
+  <style>
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #0b0c10;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+    }
+
+    #app {
+      display: flex;
+      flex-direction: column;
+      width: 100vw;
+      height: 100vh;
+      position: relative;
+    }
+
+    /* Верхняя панель */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 12px;
+      background: #1f2833;
+      z-index: 10;
+      border-bottom: 1px solid #45a29e;
+    }
+    .top-bar h1 {
+      margin: 0;
+      font-size: 15px;
+      color: #66fcf1;
+      font-weight: 700;
+    }
+    .top-bar .nav-btns {
+      display: flex;
+      gap: 6px;
+    }
+    .btn-ui {
+      background: #45a29e;
+      border: none;
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .btn-ui:active {
+      background: #66fcf1;
+      color: #0b0c10;
+    }
+
+    /* Хост для Эмулятора и Игровой зоны */
+    #game-container {
+      flex: 1;
+      position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: #000;
+      overflow: hidden;
+    }
+
+    canvas#emulator-canvas {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      image-rendering: pixelated;
+    }
+
+    /* CRT Scanlines Filter */
+    .scanlines::before {
+      content: " ";
+      display: block;
+      position: absolute;
+      top: 0; left: 0; bottom: 0; right: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.3) 50%);
+      background-size: 100% 4px;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    /* Сенсорные контроллеры */
+    #touch-controls {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 5;
+      display: flex;
+      justify-content: space-between;
+      padding: 15px;
+      transition: opacity 0.2s;
+    }
+
+    .control-group {
+      pointer-events: auto;
+      display: grid;
+      gap: 8px;
+      align-self: flex-end;
+      margin-bottom: 10px;
+    }
+
+    .dpad {
+      grid-template-columns: repeat(3, 48px);
+      grid-template-rows: repeat(3, 48px);
+    }
+
+    .action-buttons {
+      grid-template-columns: repeat(3, 48px);
+      grid-template-rows: repeat(3, 48px);
+    }
+
+    .shoulders {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      right: 15px;
+      display: flex;
+      justify-content: space-between;
+      pointer-events: auto;
+    }
+
+    .center-btns {
+      position: absolute;
+      bottom: 15px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 15px;
+      pointer-events: auto;
+    }
+
+    .btn-touch {
+      background: rgba(255, 255, 255, 0.2);
+      border: 2px solid rgba(255, 255, 255, 0.4);
+      border-radius: 50%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.4);
+      backdrop-filter: blur(2px);
+    }
+    .btn-pill {
+      border-radius: 12px;
+      padding: 6px 14px;
+      font-size: 11px;
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .btn-touch:active {
+      background: rgba(102, 252, 241, 0.6);
+      transform: scale(0.95);
+    }
+
+    /* Модальные окна и Библиотека */
+    .modal {
+      display: none;
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(11, 12, 16, 0.96);
+      z-index: 20;
+      flex-direction: column;
+      padding: 16px;
+      overflow-y: auto;
+    }
+
+    .modal h2 {
+      color: #66fcf1;
+      margin-top: 0;
+      border-bottom: 1px solid #1f2833;
+      padding-bottom: 8px;
+      font-size: 18px;
+    }
+
+    .setting-item {
+      margin-bottom: 16px;
+      background: #1f2833;
+      padding: 12px;
+      border-radius: 6px;
+    }
+    .setting-item label {
+      display: block;
+      margin-bottom: 6px;
+      color: #c5c6c7;
+      font-size: 13px;
+    }
+    .setting-item input[type="range"], .setting-item select {
+      width: 100%;
+      padding: 8px;
+      background: #0b0c10;
+      border: 1px solid #45a29e;
+      color: #fff;
+      border-radius: 4px;
+    }
+
+    /* Сетка библиотек игр */
+    .games-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .game-card {
+      background: #1f2833;
+      border: 1px solid #45a29e;
+      border-radius: 6px;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      text-align: center;
+    }
+    .game-card .title {
+      font-size: 12px;
+      font-weight: bold;
+      word-break: break-word;
+      margin-bottom: 6px;
+      color: #fff;
+    }
+    .game-card .info {
+      font-size: 10px;
+      color: #c5c6c7;
+      margin-bottom: 8px;
+    }
+    .game-card .actions {
+      display: flex;
+      gap: 4px;
+    }
+    .game-card .actions button {
+      flex: 1;
+      padding: 6px;
+      font-size: 11px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .btn-play { background: #66fcf1; color: #0b0c10; font-weight: bold; }
+    .btn-del { background: #ff0055; color: #fff; }
+
+    .file-input-wrapper {
+      position: relative;
+      margin-bottom: 12px;
+    }
+    .file-input-wrapper input[type="file"] {
+      display: none;
+    }
+    .file-input-btn {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      background: #45a29e;
+      color: #fff;
+      text-align: center;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-    <div id="app-container">
-        <header>
-            <button class="btn" onclick="document.getElementById('file-input').click()">📁 ROM</button>
-            <button class="btn" onclick="toggleFullscreen()">⛶ Экран</button>
-            <button class="btn" onclick="openSettings()">⚙️ Настройки</button>
-        </header>
 
-        <div id="canvas-container">
-            <div id="loading-overlay" style="display: none;">
-                <div class="spinner"></div>
-                <p id="loading-text">Загрузка игры...</p>
-            </div>
-            <canvas id="canvas"></canvas>
+  <div id="app">
+    <!-- Верхнее меню управления -->
+    <div class="top-bar">
+      <h1>PS1 Emulator</h1>
+      <div class="nav-btns">
+        <button class="btn-ui" id="library-btn">📁 Библиотека</button>
+        <button class="btn-ui" id="fullscreen-btn">📺 Экран</button>
+        <button class="btn-ui" id="fast-forward-btn">⚡ x1</button>
+        <button class="btn-ui" id="save-state-btn">💾 Сохранить</button>
+        <button class="btn-ui" id="settings-btn">⚙️</button>
+      </div>
+    </div>
+
+    <!-- Игровая область -->
+    <div id="game-container">
+      <canvas id="emulator-canvas"></canvas>
+
+      <!-- Сенсорный геймпад -->
+      <div id="touch-controls">
+        <div class="shoulders">
+          <div style="display:flex; gap:6px;">
+            <div class="btn-touch btn-pill" data-key="L1">L1</div>
+            <div class="btn-touch btn-pill" data-key="L2">L2</div>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <div class="btn-touch btn-pill" data-key="R2">R2</div>
+            <div class="btn-touch btn-pill" data-key="R1">R1</div>
+          </div>
         </div>
+
+        <div class="control-group dpad">
+          <div></div>
+          <div class="btn-touch" data-key="up">▲</div>
+          <div></div>
+          <div class="btn-touch" data-key="left">◀</div>
+          <div></div>
+          <div class="btn-touch" data-key="right">▶</div>
+          <div></div>
+          <div class="btn-touch" data-key="down">▼</div>
+          <div></div>
+        </div>
+
+        <div class="center-btns">
+          <div class="btn-touch btn-pill" data-key="select">SELECT</div>
+          <div class="btn-touch btn-pill" data-key="start">START</div>
+        </div>
+
+        <div class="control-group action-buttons">
+          <div></div>
+          <div class="btn-touch" style="color: #45a29e;" data-key="triangle">△</div>
+          <div></div>
+          <div class="btn-touch" style="color: #ff0055;" data-key="square">□</div>
+          <div></div>
+          <div class="btn-touch" style="color: #ffcc00;" data-key="circle">◯</div>
+          <div></div>
+          <div class="btn-touch" style="color: #00ff66;" data-key="cross">✕</div>
+          <div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Окно библиотеки игр -->
+    <div class="modal" id="library-modal">
+      <h2>Библиотека игр (IndexedDB)</h2>
+      
+      <div class="file-input-wrapper">
+        <label for="rom-file-input" class="file-input-btn">➕ Добавить образ (.bin, .iso, .cue, .chd, .pbp)</label>
+        <input type="file" id="rom-file-input" accept=".bin,.iso,.cue,.chd,.pbp">
+      </div>
+
+      <div class="games-grid" id="games-grid"></div>
+
+      <button class="btn-ui" id="close-library-btn" style="margin-top: auto; padding: 12px; background: #66fcf1; color: #0b0c10; font-weight: bold;">Закрыть</button>
     </div>
 
     <!-- Модальное окно настроек -->
-    <div id="settings-modal">
-        <div class="modal-content">
-            <h3 style="margin-bottom: 5px;">⚙️ Настройки</h3>
-            
-            <div class="setting-row">
-                <span>🧠 Системный BIOS:</span>
-                <button class="file-btn" onclick="document.getElementById('bios-input').click()">Загрузить BIOS</button>
-            </div>
-            <div id="bios-info" style="font-size: 11px; color: #34c759; text-align: right;">BIOS не добавлен</div>
-
-            <div class="setting-row">
-                <span>🎮 Ядро:</span>
-                <select id="core-select">
-                    <option value="pcsx_rearmed">PCSX ReARMed</option>
-                </select>
-            </div>
-
-            <button class="btn" style="background: #34c759; margin-top: 10px; justify-content: center;" onclick="closeSettings()">Продолжить</button>
+    <div class="modal" id="settings-modal">
+      <h2>Настройки и BIOS</h2>
+      
+      <div class="setting-item">
+        <label>Кастомный BIOS (scph1001.bin)</label>
+        <div class="file-input-wrapper" style="margin-bottom:0;">
+          <label for="bios-file-input" class="file-input-btn" id="bios-status-label" style="background:#1f2833; border:1px solid #45a29e;">Загрузить BIOS (.bin)</label>
+          <input type="file" id="bios-file-input" accept=".bin">
         </div>
+      </div>
+
+      <div class="setting-item">
+        <label>Прозрачность сенсорных кнопок</label>
+        <input type="range" id="opacity-range" min="0.1" max="1" step="0.1" value="0.8">
+      </div>
+
+      <div class="setting-item">
+        <label>Размер кнопок управления</label>
+        <input type="range" id="scale-range" min="0.7" max="1.4" step="0.1" value="1">
+      </div>
+
+      <div class="setting-item">
+        <label>Ретро-фильтр (CRT Scanlines)</label>
+        <select id="crt-toggle">
+          <option value="off">Отключен</option>
+          <option value="on">Включен (Ламповый ТВ)</option>
+        </select>
+      </div>
+
+      <button class="btn-ui" id="close-settings-btn" style="margin-top: auto; padding: 12px; background: #66fcf1; color: #0b0c10; font-weight: bold;">Закрыть</button>
     </div>
+  </div>
 
-    <!-- Скрытые инпуты -->
-    <input type="file" id="file-input" multiple accept=".bin,.cue,.chd,.pbp,.iso,.img,.m3u,.zip">
-    <input type="file" id="bios-input" multiple accept=".bin,.BIN">
+  <script>
+    // --- 1. Модуль Хранилища IndexedDB ---
+    class PS1Storage {
+      constructor() {
+        this.dbName = 'PS1EmulatorDB';
+        this.version = 1;
+      }
 
-    <script>
-        let currentInstance = null;
-        let storedBiosFiles = [];
+      async openDB() {
+        return new Promise((resolve, reject) => {
+          const request = indexedDB.open(this.dbName, this.version);
+          request.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('games')) {
+              db.createObjectStore('games', { keyPath: 'id' });
+            }
+            if (!db.objectStoreNames.contains('bios')) {
+              db.createObjectStore('bios', { keyPath: 'id' });
+            }
+          };
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+      }
 
-        const fileInput = document.getElementById('file-input');
-        const biosInput = document.getElementById('bios-input');
-        const settingsModal = document.getElementById('settings-modal');
-        const biosInfo = document.getElementById('bios-info');
-        const loadingOverlay = document.getElementById('loading-overlay');
-        const loadingText = document.getElementById('loading-text');
+      async saveGame(file) {
+        const db = await this.openDB();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction('games', 'readwrite');
+          const store = tx.objectStore('games');
+          const ext = file.name.split('.').pop().toLowerCase();
+          const item = {
+            id: file.name,
+            name: file.name,
+            format: ext.toUpperCase(),
+            size: (file.size / (1024 * 1024)).toFixed(1) + ' MB',
+            blob: file
+          };
+          const req = store.put(item);
+          req.onsuccess = () => resolve(item);
+          req.onerror = () => reject(req.error);
+        });
+      }
 
-        // Регистрация Service Worker
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch(err => console.log(err));
-            });
+      async getAllGames() {
+        const db = await this.openDB();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction('games', 'readonly');
+          const store = tx.objectStore('games');
+          const req = store.getAll();
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      async deleteGame(id) {
+        const db = await this.openDB();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction('games', 'readwrite');
+          const store = tx.objectStore('games');
+          const req = store.delete(id);
+          req.onsuccess = () => resolve(true);
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      async saveBIOS(file) {
+        const db = await this.openDB();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction('bios', 'readwrite');
+          const store = tx.objectStore('bios');
+          const item = { id: 'custom_bios', name: file.name, blob: file };
+          const req = store.put(item);
+          req.onsuccess = () => resolve(true);
+          req.onerror = () => reject(req.error);
+        });
+      }
+
+      async getBIOS() {
+        const db = await this.openDB();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction('bios', 'readonly');
+          const store = tx.objectStore('bios');
+          const req = store.get('custom_bios');
+          req.onsuccess = () => resolve(req.result ? req.result : null);
+          req.onerror = () => reject(req.error);
+        });
+      }
+    }
+
+    const storage = new PS1Storage();
+
+    // --- 2. Тактильная отдача и Вибрация ---
+    function triggerVibe(ms = 15) {
+      if ('vibrate' in navigator) {
+        try { navigator.vibrate(ms); } catch(e){}
+      }
+    }
+
+    document.querySelectorAll('.btn-touch').forEach(button => {
+      button.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        triggerVibe(15);
+      });
+    });
+
+    // --- 3. Fullscreen API и Screen Orientation API ---
+    const fsBtn = document.getElementById('fullscreen-btn');
+
+    async function lockLandscape() {
+      try {
+        if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
+        } else if (document.documentElement.webkitRequestFullscreen && !document.fullscreenElement) {
+          await document.documentElement.webkitRequestFullscreen();
         }
 
-        // Выбор BIOS через меню настроек
-        biosInput.addEventListener('change', (e) => {
-            const files = Array.from(e.target.files);
-            if (!files.length) return;
-
-            storedBiosFiles = files;
-            biosInfo.innerText = "✓ Загружен: " + files.map(f => f.name).join(', ');
-            alert("Файл BIOS сохранен! Теперь можно запускать игру.");
-        });
-
-        // Запуск файлов игры
-        fileInput.addEventListener('change', async (e) => {
-            const files = Array.from(e.target.files);
-            if (!files.length) return;
-
-            showLoading('Загрузка и сборка файлов...');
-
-            try {
-                if (currentInstance) {
-                    await currentInstance.destroy();
-                }
-
-                const options = {
-                    core: 'pcsx_rearmed',
-                    rom: files,
-                    element: document.getElementById('canvas'),
-                    style: { width: '100%', height: '100%' }
-                };
-
-                // Прикрепляем BIOS если он был загружен
-                if (storedBiosFiles.length > 0) {
-                    options.bios = storedBiosFiles;
-                }
-
-                currentInstance = await Nostalgist.launch(options);
-                hideLoading();
-            } catch (err) {
-                console.error(err);
-                alert('Ошибка запуска: ' + (err.message || err));
-                hideLoading();
-            }
-        });
-
-        function openSettings() { settingsModal.style.display = 'flex'; }
-        function closeSettings() { settingsModal.style.display = 'none'; }
-        function showLoading(text) { loadingText.innerText = text; loadingOverlay.style.display = 'flex'; }
-        function hideLoading() { loadingOverlay.style.display = 'none'; }
-
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => console.log(err));
-            } else if (document.exitFullscreen) {
-                document.exitFullscreen();
-            }
+        if (screen.orientation && screen.orientation.lock) {
+          await screen.orientation.lock('landscape');
         }
-    </script>
-</body>
-</html>
+      } catch (err) {
+        console.warn('Автоповорот/Полноэкранный режим не сработал:', err);
+      }
+    }
+
+    async function toggleFullscreen() {
+      triggerVibe(20);
+      try {
+        const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
+
+        if (!isFullscreen) {
+          await lockLandscape();
+          fsBtn.innerText = '📺 Свернуть';
+        } else {
+          if (screen.orientation && screen.orientation.unlock) {
+            screen.orientation.unlock();
+          }
+
+          if (document.exitFullscreen) {
+            await document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            await document.webkitExitFullscreen();
+          }
+          fsBtn.innerText = '📺 Экран';
+        }
+      } catch (err) {
+        console.warn('Переключение полноэкранного режима не удалось:', err);
+      }
+    }
+
+    fsBtn.onclick = toggleFullscreen;
+
+    document.addEventListener('fullscreenchange', () => {
+      if (!document.fullscreenElement) {
+        fsBtn.innerText = '📺 Экран';
+      }
+    });
+
+    // --- 4. Геймпад API (Bluetooth / USB) ---
+    window.addEventListener("gamepadconnected", (e) => {
+      console.log("Геймпад подключен:", e.gamepad.id);
+      pollGamepad();
+    });
+
+    function pollGamepad() {
+      const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+      for (const gp of gamepads) {
+        if (!gp) continue;
+        gp.buttons.forEach((btn) => {
+          if (btn.pressed) triggerVibe(10);
+        });
+      }
+      requestAnimationFrame(pollGamepad);
+    }
+
+    // --- 5. Логика Интерфейса и Библиотеки ---
+    const libraryModal = document.getElementById('library-modal');
+    const settingsModal = document.getElementById('settings-modal');
+    const gamesGrid = document.getElementById('games-grid');
+    const biosStatusLabel = document.getElementById('bios-status-label');
+
+    document.getElementById('library-btn').onclick = () => {
+      renderLibrary();
+      libraryModal.style.display = 'flex';
+    };
+    document.getElementById('close-library-btn').onclick = () => libraryModal.style.display = 'none';
+
+    document.getElementById('settings-btn').onclick = () => settingsModal.style.display = 'flex';
+    document.getElementById('close-settings-btn').onclick = () => settingsModal.style.display = 'none';
+
+    document.getElementById('rom-file-input').onchange = async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        await storage.saveGame(file);
+        renderLibrary();
+      }
+    };
+
+    document.getElementById('bios-file-input').onchange = async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        await storage.saveBIOS(file);
+        updateBIOSStatus();
+      }
+    };
+
+    async function updateBIOSStatus() {
+      const bios = await storage.getBIOS();
+      if (bios) {
+        biosStatusLabel.innerText = `✅ BIOS: ${bios.name}`;
+        biosStatusLabel.style.borderColor = '#00ff66';
+      } else {
+        biosStatusLabel.innerText = 'Загрузить BIOS (.bin)';
+        biosStatusLabel.style.borderColor = '#45a29e';
+      }
+    }
+
+    async function renderLibrary() {
+      const games = await storage.getAllGames();
+      gamesGrid.innerHTML = '';
+
+      if (games.length === 0) {
+        gamesGrid.innerHTML = '<p style="color:#c5c6c7; font-size:12px;">Нет сохраненных игр. Добавьте образ формата .BIN, .ISO, .CHD или .PBP.</p>';
+        return;
+      }
+
+      games.forEach(game => {
+        const card = document.createElement('div');
+        card.className = 'game-card';
+        card.innerHTML = `
+          <div class="title">${game.name}</div>
+          <div class="info">${game.format} • ${game.size}</div>
+          <div class="actions">
+            <button class="btn-play" onclick="launchGame('${game.id}')">▶ Старт</button>
+            <button class="btn-del" onclick="deleteGame('${game.id}')">🗑</button>
+          </div>
+        `;
+        gamesGrid.appendChild(card);
+      });
+    }
+
+    async function launchGame(id) {
+      triggerVibe(30);
+      libraryModal.style.display = 'none';
+      await lockLandscape();
+      console.log('Запуск игры с ID:', id);
+    }
+
+    async function deleteGame(id) {
+      await storage.deleteGame(id);
+      renderLibrary();
+    }
+
+    // --- 6. Настройки Кастомизации и Фильтров ---
+    const touchControls = document.getElementById('touch-controls');
+    const opacityRange = document.getElementById('opacity-range');
+    const scaleRange = document.getElementById('scale-range');
+    const crtToggle = document.getElementById('crt-toggle');
+    const gameContainer = document.getElementById('game-container');
+
+    opacityRange.oninput = (e) => {
+      touchControls.style.opacity = e.target.value;
+      localStorage.setItem('ps1_opacity', e.target.value);
+    };
+
+    scaleRange.oninput = (e) => {
+      touchControls.style.transform = `scale(${e.target.value})`;
+      localStorage.setItem('ps1_scale', e.target.value);
+    };
+
+    crtToggle.onchange = (e) => {
+      if (e.target.value === 'on') {
+        gameContainer.classList.add('scanlines');
+      } else {
+        gameContainer.classList.remove('scanlines');
+      }
+      localStorage.setItem('ps1_crt', e.target.value);
+    };
+
+    let speed = 1;
+    const ffBtn = document.getElementById('fast-forward-btn');
+    ffBtn.onclick = () => {
+  
