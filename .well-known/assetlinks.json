@@ -3,6 +3,6 @@
       "target": {
         "namespace": "android_app",
         "package_name": "com.ps1.mobile.emulator",
-        "sha256_cert_fingerprints": ["7D:73:93:6B:79:10:78:A8:1F:4C:ED:AE:B5:97:36:51:CF:BF:4F:6B:C9:05:80:F9:47:F3:B1:00:90:26:44:D4"]
+        "sha256_cert_fingerprints": ["0E:E3:6D:4E:88:44:FD:DD:25:41:67:E1:EC:82:A1:DE:86:CB:9C:78:15:4E:A5:A1:AB:6B:D6:21:49:FB:31:C4"]
       }
     }]
